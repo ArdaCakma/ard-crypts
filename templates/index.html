@@ -10,6 +10,7 @@
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
+            touch-action: manipulation;
         }
         body {
             margin: 0;
@@ -32,7 +33,7 @@
 
         h1 {
             margin: 0;
-            font-size: 28px;
+            font-size: 26px;
             color: #c084fc;
             text-shadow: 0 0 15px #9333ea, 0 0 5px #facc15;
             letter-spacing: 2px;
@@ -41,7 +42,7 @@
         .sub-title {
             margin: 2px 0 0 0;
             color: #9ca3af;
-            font-size: 13px;
+            font-size: 12px;
         }
 
         #main-wrapper {
@@ -95,16 +96,19 @@
             #main-wrapper {
                 flex-direction: column;
                 align-items: center;
+                gap: 5px;
             }
             #game-container {
-                width: 95vw;
-                height: 60vh;
+                width: 98vw;
+                height: 55vh;
             }
             #sidebar {
-                width: 95vw;
+                width: 98vw;
                 flex-direction: row;
             }
-            .card { flex: 1; }
+            .card { flex: 1; padding: 6px; }
+            h1 { font-size: 20px; }
+            .sub-title { display: none; }
         }
     </style>
 </head>
@@ -222,7 +226,6 @@
         let gameTimer, isGameOver = false, isInvulnerable = false;
 
         function preload() {
-            // 1. ZİNDAN ARKA PLAN DOKUSU (Mistik Piksel Zemin)
             let bgCanvas = this.textures.createCanvas('bg_dungeon', 64, 64);
             let bgCtx = bgCanvas.context;
             bgCtx.fillStyle = '#110c1d'; bgCtx.fillRect(0, 0, 64, 64);
@@ -230,33 +233,24 @@
             bgCtx.fillStyle = '#211738'; bgCtx.fillRect(2, 2, 28, 28); bgCtx.fillRect(34, 34, 28, 28);
             bgCanvas.refresh();
 
-            // 2. DETAYLI ŞÖVALYE KARAKTERİ
             let pCanvas = this.textures.createCanvas('player_pixel', 28, 28);
             let ctx = pCanvas.context;
-            // Kırmızı Pelerin
             ctx.fillStyle = '#dc2626'; ctx.fillRect(4, 8, 20, 14);
-            // Çelik Zırh
             ctx.fillStyle = '#cbd5e1'; ctx.fillRect(7, 7, 14, 14);
-            // Miğfer
             ctx.fillStyle = '#64748b'; ctx.fillRect(7, 2, 14, 7);
-            ctx.fillStyle = '#38bdf8'; ctx.fillRect(9, 4, 10, 2); // Işıldayan Vizör
-            // Kalkan
+            ctx.fillStyle = '#38bdf8'; ctx.fillRect(9, 4, 10, 2);
             ctx.fillStyle = '#eab308'; ctx.fillRect(4, 10, 4, 10);
             pCanvas.refresh();
 
-            // 3. DETAYLI DÜŞMAN (Boynuzlu Kırmızı İblis)
             let eCanvas = this.textures.createCanvas('enemy_pixel', 28, 28);
             let eCtx = eCanvas.context;
-            eCtx.fillStyle = '#991b1b'; eCtx.fillRect(4, 6, 20, 18); // Gövde
+            eCtx.fillStyle = '#991b1b'; eCtx.fillRect(4, 6, 20, 18);
             eCtx.fillStyle = '#ef4444'; eCtx.fillRect(6, 8, 16, 14);
-            // Boynuzlar
             eCtx.fillStyle = '#f59e0b'; eCtx.fillRect(2, 2, 4, 6); eCtx.fillRect(22, 2, 4, 6);
-            // Gözler
             eCtx.fillStyle = '#fef08a'; eCtx.fillRect(7, 10, 4, 4); eCtx.fillRect(17, 10, 4, 4);
             eCtx.fillStyle = '#000000'; eCtx.fillRect(8, 11, 2, 2); eCtx.fillRect(18, 11, 2, 2);
             eCanvas.refresh();
 
-            // 4. DETAYLI TAŞ DUVAR
             let wCanvas = this.textures.createCanvas('wall_pixel', 32, 32);
             let wCtx = wCanvas.context;
             wCtx.fillStyle = '#2e1065'; wCtx.fillRect(0, 0, 32, 32);
@@ -264,14 +258,12 @@
             wCtx.fillStyle = '#6d28d9'; wCtx.fillRect(4, 4, 24, 4); wCtx.fillRect(4, 18, 24, 4);
             wCanvas.refresh();
 
-            // 5. IŞILDAYAN KRİSTAL
             let cCanvas = this.textures.createCanvas('crystal_pixel', 18, 18);
             let cCtx = cCanvas.context;
             cCtx.fillStyle = '#facc15'; cCtx.fillRect(4, 2, 10, 14);
             cCtx.fillStyle = '#fef08a'; cCtx.fillRect(7, 4, 4, 10);
             cCanvas.refresh();
 
-            // 6. MAVİ PORTAL
             let dCanvas = this.textures.createCanvas('door_pixel', 40, 40);
             let dCtx = dCanvas.context;
             dCtx.fillStyle = '#1e3a8a'; dCtx.fillRect(0, 0, 40, 40);
@@ -281,45 +273,35 @@
         }
 
         function create() {
-            // En Arka Plan (TileSprite Zemin Desen)
             this.add.tileSprite(400, 250, 800, 500, 'bg_dungeon');
 
-            // Duvarlar
             walls = this.physics.add.staticGroup();
             buildWalls();
 
-            // Portal
             door = this.physics.add.sprite(750, 450, 'door_pixel').setVisible(false);
             door.body.enable = false;
 
-            // Oyuncu
             player = this.physics.add.sprite(50, 50, 'player_pixel');
             player.setCollideWorldBounds(true);
             this.physics.add.collider(player, walls);
 
-            // Kristal Grubu
             crystals = this.physics.add.group();
             spawnCrystals(this);
             this.physics.add.overlap(player, crystals, collectCrystal, null, this);
 
-            // Düşman Grubu
             enemies = this.physics.add.group();
             spawnEnemies(this, currentLevel);
             this.physics.add.collider(enemies, walls);
             this.physics.add.overlap(player, enemies, hitEnemy, null, this);
 
-            // Portal Çarpışması
             this.physics.add.overlap(player, door, passLevel, null, this);
 
-            // UI
             scoreText = this.add.text(20, 15, 'Skor: 0', { fontSize: '20px', fill: '#fff', fontStyle: 'bold' });
             timerText = this.add.text(660, 15, 'Süre: 25s', { fontSize: '20px', fill: '#ef4444', fontStyle: 'bold' });
 
-            // Kontroller
             cursors = this.input.keyboard.createCursorKeys();
             createTouchControls(this);
 
-            // Zamanlayıcı
             gameTimer = this.time.addEvent({
                 delay: 1000,
                 callback: updateTimer,
@@ -334,7 +316,6 @@
             player.setVelocity(0);
             let speed = 200;
 
-            // Klavye ve Dokunmatik Kontrol Birleştirmesi
             if (cursors.left.isDown || touchControls.left) {
                 player.setVelocityX(-speed);
                 player.setFlipX(true);
@@ -346,32 +327,31 @@
             if (cursors.up.isDown || touchControls.up) player.setVelocityY(-speed);
             else if (cursors.down.isDown || touchControls.down) player.setVelocityY(speed);
 
-            // Düşman Devriye Yapay Zekası
             enemies.children.iterate(function (enemy) {
                 if (enemy.body.blocked.left || enemy.body.blocked.right) enemy.setVelocityX(-enemy.body.velocity.x);
                 if (enemy.body.blocked.up || enemy.body.blocked.down) enemy.setVelocityY(-enemy.body.velocity.y);
             });
         }
 
-        // Mobil Dokunmatik D-Pad Butonları
+        // Geliştirilmiş Mobil Dokunmatik D-Pad Butonları (Sabit & Büyük)
         function createTouchControls(scene) {
-            if (!scene.sys.game.device.input.touch) return; // Sadece dokunmatik ekranlı cihazlarda göster
-
-            let btnGroup = scene.add.group();
+            // Dokunmatik cihaz kontrolü veya ekran genişliği kontrolü
+            if (!scene.sys.game.device.input.touch && window.innerWidth > 900) return;
 
             function makeBtn(x, y, text, dir) {
-                let btn = scene.add.circle(x, y, 25, 0x6d28d9, 0.6).setInteractive();
-                scene.add.text(x - 6, y - 10, text, { fontSize: '18px', fill: '#fff' });
+                let btn = scene.add.circle(x, y, 35, 0x8b5cf6, 0.75).setInteractive().setScrollFactor(0);
+                scene.add.text(x - 8, y - 12, text, { fontSize: '24px', fill: '#ffffff', fontStyle: 'bold' }).setScrollFactor(0);
 
                 btn.on('pointerdown', () => touchControls[dir] = true);
                 btn.on('pointerup', () => touchControls[dir] = false);
                 btn.on('pointerout', () => touchControls[dir] = false);
             }
 
-            makeBtn(70, 410, '◄', 'left');
-            makeBtn(170, 410, '►', 'right');
-            makeBtn(120, 360, '▲', 'up');
-            makeBtn(120, 460, '▼', 'down');
+            // Ekranın Sol Alt Köşesinde Toplu D-Pad Butonları
+            makeBtn(65, 415, '◀', 'left');
+            makeBtn(195, 415, '▶', 'right');
+            makeBtn(130, 350, '▲', 'up');
+            makeBtn(130, 470, '▼', 'down');
         }
 
         function buildWalls() {
