@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ARD Crypts - 2D Dungeon Crawler</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050508;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-header {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+            color: #c084fc;
+            text-shadow: 0 0 15px #9333ea, 0 0 5px #facc15;
+            letter-spacing: 2px;
+        }
+
+        .sub-title {
+            margin: 2px 0 0 0;
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        #main-wrapper {
+            display: flex;
+            flex-direction: row;
+            gap: 15px;
+            max-width: 100vw;
+            max-height: 90vh;
+            padding: 10px;
+        }
+
+        #game-container {
+            width: 800px;
+            height: 500px;
+            border: 3px solid #8b5cf6;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
+            position: relative;
+        }
+
+        #sidebar {
+            width: 220px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .card {
+            background-color: #0f172a;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+
+        .card h3 { color: #facc15; margin-top: 0; font-size: 15px; border-bottom: 1px solid #334155; padding-bottom: 5px; }
+        ol { padding-left: 18px; margin: 0; }
+        li { margin-bottom: 5px; color: #cbd5e1; font-size: 12px; }
+
+        .stat-box {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .hearts { color: #ef4444; }
+
+        /* Mobil Ekran Uyum Mantığı */
+        @media (max-width: 900px) {
+            #main-wrapper {
+                flex-direction: column;
+                align-items: center;
+            }
+            #game-container {
+                width: 95vw;
+                height: 60vh;
+            }
+            #sidebar {
+                width: 95vw;
+                flex-direction: row;
+            }
+            .card { flex: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-header">
+        <h1>ARD CRYPTS</h1>
+        <div class="sub-title">Zaman Daralıyor! Kristalleri Topla ve Kapıya Ulaş!</div>
+    </div>
+
+    <div id="main-wrapper">
+        <div id="game-container"></div>
+
+        <div id="sidebar">
+            <div class="card">
+                <h3>Durum Paneli</h3>
+                <div class="stat-box"><span>Can:</span> <span id="ui-health" class="hearts">❤️❤️❤️</span></div>
+                <div class="stat-box"><span>Seviye:</span> <span id="ui-level" style="color:#60a5fa;">1</span></div>
+                <div class="stat-box"><span>Kristal:</span> <span id="ui-crystals" style="color:#facc15;">0</span></div>
+            </div>
+
+            <div class="card">
+                <h3>Liderlik Tablosu</h3>
+                <ol>
+                    {% for score in top_scores %}
+                        <li>
+                            <strong>{% if score.user %}{{ score.user.username }}{% else %}Misafir{% endif %}</strong>:
+                            {{ score.score }} P
+                        </li>
+                    {% empty %}
+                        <li>Skor yok.</li>
+                    {% endfor %}
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- SYNTHESIZER SES MOTORU ---
+        const AudioFX = {
+            ctx: null,
+            init() {
+                if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            },
+            playCollect() {
+                this.init();
+                let osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1000, this.ctx.currentTime + 0.12);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.12);
+            },
+            playHit() {
+                this.init();
+                let osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(140, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.25);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.25);
+            },
+            playLevelUp() {
+                this.init();
+                [300, 400, 500, 700].forEach((freq, i) => {
+                    let osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime + (i * 0.07));
+                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime + (i * 0.07));
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + (i * 0.07) + 0.09);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(this.ctx.currentTime + (i * 0.07));
+                    osc.stop(this.ctx.currentTime + (i * 0.07) + 0.09);
+                });
+            },
+            playGameOver() {
+                this.init();
+                let osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.5);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.5);
+            }
+        };
+
+        // --- PHASER KONTROL VE MOBİL UYUM MOTORU ---
+        const config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 500,
+            parent: 'game-container',
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH
+            },
+            physics: {
+                default: 'arcade',
+                arcade: { debug: false }
+            },
+            scene: { preload: preload, create: create, update: update }
+        };
+
+        const game = new Phaser.Game(config);
+        let player, crystals, enemies, walls, door;
+        let cursors, touchControls = { left: false, right: false, up: false, down: false };
+        let scoreText, timerText;
+        let score = 0, crystalsCollected = 0, currentLevel = 1, health = 3, timeLeft = 25;
+        let gameTimer, isGameOver = false, isInvulnerable = false;
+
+        function preload() {
+            // 1. ZİNDAN ARKA PLAN DOKUSU (Mistik Piksel Zemin)
+            let bgCanvas = this.textures.createCanvas('bg_dungeon', 64, 64);
+            let bgCtx = bgCanvas.context;
+            bgCtx.fillStyle = '#110c1d'; bgCtx.fillRect(0, 0, 64, 64);
+            bgCtx.fillStyle = '#18122b'; bgCtx.fillRect(0, 0, 62, 62);
+            bgCtx.fillStyle = '#211738'; bgCtx.fillRect(2, 2, 28, 28); bgCtx.fillRect(34, 34, 28, 28);
+            bgCanvas.refresh();
+
+            // 2. DETAYLI ŞÖVALYE KARAKTERİ
+            let pCanvas = this.textures.createCanvas('player_pixel', 28, 28);
+            let ctx = pCanvas.context;
+            // Kırmızı Pelerin
+            ctx.fillStyle = '#dc2626'; ctx.fillRect(4, 8, 20, 14);
+            // Çelik Zırh
+            ctx.fillStyle = '#cbd5e1'; ctx.fillRect(7, 7, 14, 14);
+            // Miğfer
+            ctx.fillStyle = '#64748b'; ctx.fillRect(7, 2, 14, 7);
+            ctx.fillStyle = '#38bdf8'; ctx.fillRect(9, 4, 10, 2); // Işıldayan Vizör
+            // Kalkan
+            ctx.fillStyle = '#eab308'; ctx.fillRect(4, 10, 4, 10);
+            pCanvas.refresh();
+
+            // 3. DETAYLI DÜŞMAN (Boynuzlu Kırmızı İblis)
+            let eCanvas = this.textures.createCanvas('enemy_pixel', 28, 28);
+            let eCtx = eCanvas.context;
+            eCtx.fillStyle = '#991b1b'; eCtx.fillRect(4, 6, 20, 18); // Gövde
+            eCtx.fillStyle = '#ef4444'; eCtx.fillRect(6, 8, 16, 14);
+            // Boynuzlar
+            eCtx.fillStyle = '#f59e0b'; eCtx.fillRect(2, 2, 4, 6); eCtx.fillRect(22, 2, 4, 6);
+            // Gözler
+            eCtx.fillStyle = '#fef08a'; eCtx.fillRect(7, 10, 4, 4); eCtx.fillRect(17, 10, 4, 4);
+            eCtx.fillStyle = '#000000'; eCtx.fillRect(8, 11, 2, 2); eCtx.fillRect(18, 11, 2, 2);
+            eCanvas.refresh();
+
+            // 4. DETAYLI TAŞ DUVAR
+            let wCanvas = this.textures.createCanvas('wall_pixel', 32, 32);
+            let wCtx = wCanvas.context;
+            wCtx.fillStyle = '#2e1065'; wCtx.fillRect(0, 0, 32, 32);
+            wCtx.fillStyle = '#4c1d95'; wCtx.fillRect(2, 2, 28, 28);
+            wCtx.fillStyle = '#6d28d9'; wCtx.fillRect(4, 4, 24, 4); wCtx.fillRect(4, 18, 24, 4);
+            wCanvas.refresh();
+
+            // 5. IŞILDAYAN KRİSTAL
+            let cCanvas = this.textures.createCanvas('crystal_pixel', 18, 18);
+            let cCtx = cCanvas.context;
+            cCtx.fillStyle = '#facc15'; cCtx.fillRect(4, 2, 10, 14);
+            cCtx.fillStyle = '#fef08a'; cCtx.fillRect(7, 4, 4, 10);
+            cCanvas.refresh();
+
+            // 6. MAVİ PORTAL
+            let dCanvas = this.textures.createCanvas('door_pixel', 40, 40);
+            let dCtx = dCanvas.context;
+            dCtx.fillStyle = '#1e3a8a'; dCtx.fillRect(0, 0, 40, 40);
+            dCtx.fillStyle = '#3b82f6'; dCtx.fillRect(5, 5, 30, 30);
+            dCtx.fillStyle = '#93c5fd'; dCtx.fillRect(12, 12, 16, 16);
+            dCanvas.refresh();
+        }
+
+        function create() {
+            // En Arka Plan (TileSprite Zemin Desen)
+            this.add.tileSprite(400, 250, 800, 500, 'bg_dungeon');
+
+            // Duvarlar
+            walls = this.physics.add.staticGroup();
+            buildWalls();
+
+            // Portal
+            door = this.physics.add.sprite(750, 450, 'door_pixel').setVisible(false);
+            door.body.enable = false;
+
+            // Oyuncu
+            player = this.physics.add.sprite(50, 50, 'player_pixel');
+            player.setCollideWorldBounds(true);
+            this.physics.add.collider(player, walls);
+
+            // Kristal Grubu
+            crystals = this.physics.add.group();
+            spawnCrystals(this);
+            this.physics.add.overlap(player, crystals, collectCrystal, null, this);
+
+            // Düşman Grubu
+            enemies = this.physics.add.group();
+            spawnEnemies(this, currentLevel);
+            this.physics.add.collider(enemies, walls);
+            this.physics.add.overlap(player, enemies, hitEnemy, null, this);
+
+            // Portal Çarpışması
+            this.physics.add.overlap(player, door, passLevel, null, this);
+
+            // UI
+            scoreText = this.add.text(20, 15, 'Skor: 0', { fontSize: '20px', fill: '#fff', fontStyle: 'bold' });
+            timerText = this.add.text(660, 15, 'Süre: 25s', { fontSize: '20px', fill: '#ef4444', fontStyle: 'bold' });
+
+            // Kontroller
+            cursors = this.input.keyboard.createCursorKeys();
+            createTouchControls(this);
+
+            // Zamanlayıcı
+            gameTimer = this.time.addEvent({
+                delay: 1000,
+                callback: updateTimer,
+                callbackScope: this,
+                loop: true
+            });
+        }
+
+        function update() {
+            if (isGameOver) return;
+
+            player.setVelocity(0);
+            let speed = 200;
+
+            // Klavye ve Dokunmatik Kontrol Birleştirmesi
+            if (cursors.left.isDown || touchControls.left) {
+                player.setVelocityX(-speed);
+                player.setFlipX(true);
+            } else if (cursors.right.isDown || touchControls.right) {
+                player.setVelocityX(speed);
+                player.setFlipX(false);
+            }
+
+            if (cursors.up.isDown || touchControls.up) player.setVelocityY(-speed);
+            else if (cursors.down.isDown || touchControls.down) player.setVelocityY(speed);
+
+            // Düşman Devriye Yapay Zekası
+            enemies.children.iterate(function (enemy) {
+                if (enemy.body.blocked.left || enemy.body.blocked.right) enemy.setVelocityX(-enemy.body.velocity.x);
+                if (enemy.body.blocked.up || enemy.body.blocked.down) enemy.setVelocityY(-enemy.body.velocity.y);
+            });
+        }
+
+        // Mobil Dokunmatik D-Pad Butonları
+        function createTouchControls(scene) {
+            if (!scene.sys.game.device.input.touch) return; // Sadece dokunmatik ekranlı cihazlarda göster
+
+            let btnGroup = scene.add.group();
+
+            function makeBtn(x, y, text, dir) {
+                let btn = scene.add.circle(x, y, 25, 0x6d28d9, 0.6).setInteractive();
+                scene.add.text(x - 6, y - 10, text, { fontSize: '18px', fill: '#fff' });
+
+                btn.on('pointerdown', () => touchControls[dir] = true);
+                btn.on('pointerup', () => touchControls[dir] = false);
+                btn.on('pointerout', () => touchControls[dir] = false);
+            }
+
+            makeBtn(70, 410, '◄', 'left');
+            makeBtn(170, 410, '►', 'right');
+            makeBtn(120, 360, '▲', 'up');
+            makeBtn(120, 460, '▼', 'down');
+        }
+
+        function buildWalls() {
+            let layout = [
+                {x: 200, y: 120}, {x: 200, y: 152}, {x: 200, y: 184},
+                {x: 400, y: 260}, {x: 400, y: 292}, {x: 400, y: 324},
+                {x: 600, y: 120}, {x: 600, y: 152}, {x: 600, y: 184}
+            ];
+            layout.forEach(w => walls.create(w.x, w.y, 'wall_pixel'));
+        }
+
+        function spawnCrystals(scene) {
+            let positions = [
+                {x: 120, y: 240}, {x: 300, y: 90}, {x: 500, y: 420},
+                {x: 700, y: 140}, {x: 280, y: 420}
+            ];
+            positions.forEach(pos => crystals.create(pos.x, pos.y, 'crystal_pixel'));
+        }
+
+        function spawnEnemies(scene, count) {
+            enemies.clear(true, true);
+            for (let i = 0; i < count + 1; i++) {
+                let x = Phaser.Math.Between(200, 650);
+                let y = Phaser.Math.Between(150, 400);
+                let enemy = enemies.create(x, y, 'enemy_pixel');
+                enemy.setCollideWorldBounds(true);
+                enemy.setBounce(1);
+
+                let speed = 110 + (count * 20);
+                enemy.setVelocity(
+                    Phaser.Math.Between(-1, 1) > 0 ? speed : -speed,
+                    Phaser.Math.Between(-1, 1) > 0 ? speed : -speed
+                );
+            }
+        }
+
+        function collectCrystal(player, crystal) {
+            crystal.disableBody(true, true);
+            AudioFX.playCollect();
+
+            score += 150;
+            crystalsCollected += 1;
+            scoreText.setText('Skor: ' + score);
+            document.getElementById('ui-crystals').innerText = crystalsCollected;
+
+            if (crystals.countActive(true) === 0) {
+                door.setVisible(true);
+                door.body.enable = true;
+                timerText.setText("PORTAL AÇILDI!");
+            }
+        }
+
+        function hitEnemy(player, enemy) {
+            if (isInvulnerable) return;
+
+            AudioFX.playHit();
+            health -= 1;
+            updateHeartsUI();
+
+            if (health <= 0) {
+                gameOver("Düşmana Yem Oldun!");
+            } else {
+                isInvulnerable = true;
+                player.setAlpha(0.4);
+                this.time.addEvent({
+                    delay: 1500,
+                    callback: () => {
+                        isInvulnerable = false;
+                        player.setAlpha(1);
+                    }
+                });
+            }
+        }
+
+        function passLevel() {
+            AudioFX.playLevelUp();
+            currentLevel += 1;
+            score += 500;
+            timeLeft = 25 + (currentLevel * 2);
+
+            document.getElementById('ui-level').innerText = currentLevel;
+            scoreText.setText('Skor: ' + score);
+
+            player.setPosition(50, 50);
+            door.setVisible(false);
+            door.body.enable = false;
+
+            spawnCrystals(this);
+            spawnEnemies(this, currentLevel);
+        }
+
+        function updateTimer() {
+            if (isGameOver) return;
+            timeLeft--;
+            timerText.setText('Süre: ' + timeLeft + 's');
+
+            if (timeLeft <= 0) gameOver("Zaman Tükendi!");
+        }
+
+        function updateHeartsUI() {
+            let heartsStr = "";
+            for (let i = 0; i < health; i++) heartsStr += "❤️";
+            document.getElementById('ui-health').innerText = heartsStr || "💀";
+        }
+
+        function gameOver(reason) {
+            isGameOver = true;
+            gameTimer.remove();
+            game.scene.scenes[0].physics.pause();
+            AudioFX.playGameOver();
+
+            setTimeout(() => {
+                alert("OYUN BİTTİ!\nNeden: " + reason + "\nSkorunuz: " + score);
+                saveScoreToDjango(score, crystalsCollected);
+            }, 100);
+        }
+
+        function saveScoreToDjango(finalScore, finalCrystals) {
+            fetch('/api/save-score/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ score: finalScore, crystals: finalCrystals })
+            })
+            .then(res => res.json())
+            .then(data => window.location.reload());
+        }
+    </script>
+</body>
+</html>
