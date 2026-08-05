@@ -15,31 +15,32 @@
         html, body {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
             background-color: #050508;
             color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
         body {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: center;
         }
 
         #game-header {
             text-align: center;
-            padding: 5px 0;
+            padding: 4px 0;
+            flex-shrink: 0;
         }
 
         h1 {
             margin: 0;
-            font-size: 22px;
+            font-size: 20px;
             color: #c084fc;
-            text-shadow: 0 0 15px #9333ea, 0 0 5px #facc15;
+            text-shadow: 0 0 10px #9333ea;
             letter-spacing: 2px;
         }
 
@@ -52,16 +53,20 @@
         #main-wrapper {
             display: flex;
             flex-direction: row;
-            gap: 10px;
-            width: 100vw;
-            max-width: 1200px;
-            padding: 5px;
+            gap: 12px;
+            width: 98vw;
+            max-width: 1100px;
+            height: calc(100vh - 45px);
+            max-height: 520px;
+            padding: 4px;
             justify-content: center;
+            align-items: center;
+            position: relative;
         }
 
         #game-container {
-            width: 800px;
-            height: 500px;
+            flex: 1;
+            height: 100%;
             border: 2px solid #8b5cf6;
             border-radius: 8px;
             overflow: hidden;
@@ -72,9 +77,10 @@
 
         #sidebar {
             width: 220px;
+            height: 100%;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
         .card {
@@ -87,89 +93,131 @@
         .card h3 {
             color: #facc15;
             margin-top: 0;
-            font-size: 14px;
+            font-size: 13px;
             border-bottom: 1px solid #334155;
             padding-bottom: 4px;
+            margin-bottom: 6px;
         }
         ol { padding-left: 18px; margin: 0; }
-        li { margin-bottom: 4px; color: #cbd5e1; font-size: 12px; }
+        li { margin-bottom: 4px; color: #cbd5e1; font-size: 11px; }
 
         .stat-box {
             display: flex;
             justify-content: space-between;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             margin-bottom: 4px;
         }
         .hearts { color: #ef4444; }
 
-        /* --- MOBİL DİKEY (PORTRAIT) MOD --- */
-        @media (max-width: 900px) {
-            #main-wrapper {
-                flex-direction: column;
-                align-items: center;
-                padding: 2px;
-            }
-            #game-container {
-                width: 100vw;
-                height: 60vh;
-                border-radius: 0;
-                border-left: none;
-                border-right: none;
-            }
-            #sidebar {
-                width: 100vw;
-                flex-direction: row;
-                padding: 0 5px;
-            }
-            .card { flex: 1; padding: 6px; }
-            h1 { font-size: 18px; }
-            .sub-title { display: none; }
+        /* NICKNAME OVERLAY MODAL */
+        #login-modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 5, 8, 0.92);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
         }
 
-        /* --- MOBİL YATAY (LANDSCAPE) MOD: OYUN EKRANI TAM SIĞAR --- */
-        @media (max-width: 950px) and (orientation: landscape) {
-            #game-header { display: none; }
+        .modal-box {
+            background: #0f172a;
+            border: 2px solid #8b5cf6;
+            padding: 24px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.5);
+            max-width: 320px;
+            width: 85%;
+        }
 
+        .modal-box h2 {
+            margin-top: 0;
+            color: #facc15;
+            font-size: 18px;
+        }
+
+        .modal-box input {
+            width: 100%;
+            padding: 10px;
+            margin: 14px 0;
+            border-radius: 6px;
+            border: 1px solid #334155;
+            background-color: #1e293b;
+            color: #fff;
+            text-align: center;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .modal-box input:focus {
+            border-color: #8b5cf6;
+        }
+
+        .modal-box button {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+            color: #fff;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* --- MOBİL UYUM (PORTRAIT / DIKEY) --- */
+        @media (max-width: 768px) and (orientation: portrait) {
+            #game-header { display: none; }
             #main-wrapper {
                 flex-direction: column;
                 width: 100vw;
+                height: 100vh;
+                max-height: none;
                 padding: 0;
                 gap: 0;
             }
-
             #game-container {
                 width: 100vw;
-                height: 82vh;
+                height: 75vh;
+                border-radius: 0;
+                border: none;
+            }
+            #sidebar {
+                width: 100vw;
+                height: 25vh;
+                flex-direction: row;
+                padding: 4px;
+                background-color: #050508;
+            }
+            .card { flex: 1; padding: 6px; }
+        }
+
+        /* --- MOBİL UYUM (LANDSCAPE / YATAY) --- */
+        @media (max-width: 950px) and (orientation: landscape) {
+            #game-header { display: none; }
+            #main-wrapper {
+                flex-direction: row;
+                width: 100vw;
+                height: 100vh;
+                max-height: none;
+                padding: 0;
+                gap: 0;
+            }
+            #game-container {
+                flex: 1;
+                height: 100vh;
                 border: none;
                 border-radius: 0;
             }
-
             #sidebar {
-                width: 100vw;
-                height: 18vh;
-                flex-direction: row;
-                gap: 5px;
-                padding: 2px 5px;
+                width: 180px;
+                height: 100vh;
+                padding: 4px;
                 background-color: #050508;
-            }
-
-            .card {
-                padding: 4px 8px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-            }
-
-            .card h3 {
-                font-size: 11px;
-                margin-bottom: 2px;
-                padding-bottom: 2px;
-            }
-
-            .stat-box, li {
-                font-size: 11px;
-                margin-bottom: 1px;
             }
         }
     </style>
@@ -182,33 +230,54 @@
     </div>
 
     <div id="main-wrapper">
+        <div id="login-modal">
+            <div class="modal-box">
+                <h2>OYUNCU GİRİŞİ</h2>
+                <p style="font-size: 12px; color: #9ca3af; margin: 0;">Liderlik tablosunda yerini almak için bir isim gir:</p>
+                <input type="text" id="username-input" placeholder="Kullanıcı Adı" maxlength="12">
+                <button onclick="startGameWithUser()">OYUNA BAŞLA</button>
+            </div>
+        </div>
+
         <div id="game-container"></div>
 
         <div id="sidebar">
             <div class="card">
                 <h3>Durum Paneli</h3>
+                <div class="stat-box"><span>Oyuncu:</span> <span id="ui-player" style="color:#c084fc;">-</span></div>
                 <div class="stat-box"><span>Can:</span> <span id="ui-health" class="hearts">❤️❤️❤️</span></div>
                 <div class="stat-box"><span>Seviye:</span> <span id="ui-level" style="color:#60a5fa;">1</span></div>
                 <div class="stat-box"><span>Kristal:</span> <span id="ui-crystals" style="color:#facc15;">0</span></div>
             </div>
 
-            <div class="card">
+            <div class="card" style="flex:1; overflow-y:auto;">
                 <h3>Liderlik Tablosu</h3>
-                <ol>
-                    {% for score in top_scores %}
-                        <li>
-                            <strong>{% if score.user %}{{ score.user.username }}{% else %}Misafir{% endif %}</strong>:
-                            {{ score.score }} P
-                        </li>
-                    {% empty %}
-                        <li>Skor yok.</li>
-                    {% endfor %}
+                <ol id="leaderboard-list">
+                    <li>Yükleniyor...</li>
                 </ol>
             </div>
         </div>
     </div>
 
     <script>
+        let currentUsername = "Misafir";
+        let phaserGame = null;
+
+        function startGameWithUser() {
+            const input = document.getElementById('username-input').value.trim();
+            if (input.length > 0) {
+                currentUsername = input;
+            }
+            document.getElementById('ui-player').innerText = currentUsername;
+            document.getElementById('login-modal').style.display = 'none';
+
+            if (!phaserGame) {
+                phaserGame = new Phaser.Game(config);
+            } else {
+                phaserGame.scene.scenes[0].scene.restart();
+            }
+        }
+
         // --- SYNTHESIZER SES MOTORU ---
         const AudioFX = {
             ctx: null,
@@ -263,7 +332,7 @@
             }
         };
 
-        // --- PHASER KONTROL VE MOBİL UYUM MOTORU ---
+        // --- PHASER AYARLARI ---
         const config = {
             type: Phaser.AUTO,
             width: 800,
@@ -280,14 +349,12 @@
             scene: { preload: preload, create: create, update: update }
         };
 
-        const game = new Phaser.Game(config);
         let player, crystals, enemies, walls, door;
         let cursors;
         let scoreText, timerText;
         let score = 0, crystalsCollected = 0, currentLevel = 1, health = 3, timeLeft = 25;
         let gameTimer, isGameOver = false, isInvulnerable = false;
 
-        // Dynamic Virtual Joystick Değişkenleri
         let joystickBase, joystickThumb;
         let joystickActive = false;
         let joystickVector = { x: 0, y: 0 };
@@ -341,6 +408,7 @@
         }
 
         function create() {
+            isGameOver = false;
             this.add.tileSprite(400, 250, 800, 500, 'bg_dungeon');
 
             walls = this.physics.add.staticGroup();
@@ -360,6 +428,7 @@
             enemies = this.physics.add.group();
             spawnEnemies(this, currentLevel);
             this.physics.add.collider(enemies, walls);
+            this.physics.add.collider(enemies, enemies);
             this.physics.add.overlap(player, enemies, hitEnemy, null, this);
 
             this.physics.add.overlap(player, door, passLevel, null, this);
@@ -391,10 +460,8 @@
             scene.input.on('pointerdown', (pointer) => {
                 if (isGameOver) return;
                 joystickActive = true;
-
                 joystickBase.setPosition(pointer.x, pointer.y).setVisible(true);
                 joystickThumb.setPosition(pointer.x, pointer.y).setVisible(true);
-
                 updateJoystickVector(pointer);
             });
 
@@ -455,11 +522,6 @@
 
             if (vx < 0) player.setFlipX(true);
             else if (vx > 0) player.setFlipX(false);
-
-            enemies.children.iterate(function (enemy) {
-                if (enemy.body.blocked.left || enemy.body.blocked.right) enemy.setVelocityX(-enemy.body.velocity.x);
-                if (enemy.body.blocked.up || enemy.body.blocked.down) enemy.setVelocityY(-enemy.body.velocity.y);
-            });
         }
 
         function buildWalls() {
@@ -482,17 +544,19 @@
         function spawnEnemies(scene, count) {
             enemies.clear(true, true);
             for (let i = 0; i < count + 1; i++) {
-                let x = Phaser.Math.Between(200, 650);
-                let y = Phaser.Math.Between(150, 400);
+                let x = Phaser.Math.Between(220, 650);
+                let y = Phaser.Math.Between(150, 380);
                 let enemy = enemies.create(x, y, 'enemy_pixel');
-                enemy.setCollideWorldBounds(true);
-                enemy.setBounce(1);
 
-                let speed = 110 + (count * 20);
-                enemy.setVelocity(
-                    Phaser.Math.Between(-1, 1) > 0 ? speed : -speed,
-                    Phaser.Math.Between(-1, 1) > 0 ? speed : -speed
-                );
+                // Düşman takılmalarını önleyen tam fizik sekme ayarları
+                enemy.setCollideWorldBounds(true);
+                enemy.setBounce(1, 1);
+                enemy.setFriction(0, 0);
+
+                let speed = 110 + (count * 15);
+                let vx = (Math.random() < 0.5 ? 1 : -1) * speed;
+                let vy = (Math.random() < 0.5 ? 1 : -1) * speed;
+                enemy.setVelocity(vx, vy);
             }
         }
 
@@ -568,24 +632,31 @@
         function gameOver(reason) {
             isGameOver = true;
             resetJoystick();
-            gameTimer.remove();
-            game.scene.scenes[0].physics.pause();
+            if (gameTimer) gameTimer.remove();
+            if (phaserGame && phaserGame.scene.scenes[0]) {
+                phaserGame.scene.scenes[0].physics.pause();
+            }
             AudioFX.playGameOver();
 
             setTimeout(() => {
-                alert("OYUN BİTTİ!\nNeden: " + reason + "\nSkorunuz: " + score);
-                saveScoreToDjango(score, crystalsCollected);
+                alert("OYUN BİTTİ!\nOyuncu: " + currentUsername + "\nNeden: " + reason + "\nSkorunuz: " + score);
+                saveScoreToDjango(currentUsername, score, crystalsCollected);
             }, 100);
         }
 
-        function saveScoreToDjango(finalScore, finalCrystals) {
+        function saveScoreToDjango(username, finalScore, finalCrystals) {
             fetch('/api/save-score/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ score: finalScore, crystals: finalCrystals })
+                body: JSON.stringify({ username: username, score: finalScore, crystals: finalCrystals })
             })
             .then(res => res.json())
-            .then(data => window.location.reload());
+            .then(data => {
+                document.getElementById('login-modal').style.display = 'flex';
+            })
+            .catch(err => {
+                document.getElementById('login-modal').style.display = 'flex';
+            });
         }
     </script>
 </body>
