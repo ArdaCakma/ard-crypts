@@ -3,6 +3,10 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import GameSession, PlayerProfile
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.views import View
+from .models import Score
 
 def game_index(request):
     """Ana oyun sayfasını ve skor tablosunu yükler."""
@@ -40,3 +44,70 @@ def save_score(request):
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
     return JsonResponse({'status': 'invalid_method'}, status=405)
+
+
+
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class SaveScoreView(View):
+
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+            raw_username = data.get('username', '').strip()
+            score_val = int(data.get('score', 0))
+            crystals_val = int(data.get('crystals', 0))
+
+            # Kullanıcı adı belirleme mantığı
+            if request.user.is_authenticated:
+                user_obj = request.user
+                player_name = user_obj.username
+            else:
+                user_obj = None
+                player_name = raw_username if raw_username else "Misafir"
+
+            # Skoru Veritabanına Kaydet
+            Score.objects.create(
+                user=user_obj,
+                username=player_name,
+                score=score_val,
+                crystals=crystals_val
+            )
+
+            # Güncel Liderlik Tablosunu Çek (En yüksek 10 skor)
+            top_scores = Score.objects.all()[:10]
+            leaderboard_data = [
+                {
+                    'username': item.username,
+                    'score': item.score,
+                    'crystals': item.crystals,
+                    'date': item.created_at.strftime('%Y-%m-%d %H:%M')
+                }
+                for item in top_scores
+            ]
+
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Skor başarıyla kaydedildi.',
+                'leaderboard': leaderboard_data
+            }, status=201)
+
+        except (ValueError, json.JSONDecodeError):
+            return JsonResponse({'status': 'error', 'message': 'Geçersiz veri formatı.'}, status=400)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+    def get(self, request, *args, **kwargs):
+        """Sadece liderlik tablosunu çekmek isteyen istekler için"""
+        top_scores = Score.objects.all()[:10]
+        leaderboard_data = [
+            {
+                'username': item.username,
+                'score': item.score,
+                'crystals': item.crystals,
+                'date': item.created_at.strftime('%Y-%m-%d %H:%M')
+            }
+            for item in top_scores
+        ]
+        return JsonResponse({'status': 'success', 'leaderboard': leaderboard_data}, status=200)

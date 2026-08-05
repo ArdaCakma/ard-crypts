@@ -76,7 +76,7 @@
         }
 
         #sidebar {
-            width: 220px;
+            width: 230px;
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -98,8 +98,6 @@
             padding-bottom: 4px;
             margin-bottom: 6px;
         }
-        ol { padding-left: 18px; margin: 0; }
-        li { margin-bottom: 4px; color: #cbd5e1; font-size: 11px; }
 
         .stat-box {
             display: flex;
@@ -110,8 +108,37 @@
         }
         .hearts { color: #ef4444; }
 
-        /* NICKNAME OVERLAY MODAL */
-        #login-modal {
+        .leaderboard-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 11px;
+            max-height: 160px;
+            overflow-y: auto;
+        }
+
+        .leaderboard-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            border-bottom: 1px dashed #1e293b;
+        }
+
+        .leaderboard-list li span.name {
+            color: #93c5fd;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 110px;
+        }
+
+        .leaderboard-list li span.score {
+            color: #facc15;
+            font-weight: bold;
+        }
+
+        .modal-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(5, 5, 8, 0.92);
@@ -125,100 +152,60 @@
 
         .modal-box {
             background: #0f172a;
-            border: 2px solid #8b5cf6;
-            padding: 24px;
+            border: 2px solid #ef4444;
+            padding: 20px;
             border-radius: 12px;
             text-align: center;
-            box-shadow: 0 0 30px rgba(139, 92, 246, 0.5);
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
             max-width: 320px;
             width: 85%;
         }
 
         .modal-box h2 {
             margin-top: 0;
-            color: #facc15;
+            color: #ef4444;
             font-size: 18px;
         }
 
         .modal-box input {
             width: 100%;
-            padding: 10px;
-            margin: 14px 0;
+            padding: 8px;
+            margin: 8px 0;
             border-radius: 6px;
             border: 1px solid #334155;
-            background-color: #1e293b;
+            background: #1e293b;
             color: #fff;
             text-align: center;
-            font-size: 14px;
+            font-size: 13px;
             outline: none;
-        }
-
-        .modal-box input:focus {
-            border-color: #8b5cf6;
         }
 
         .modal-box button {
             width: 100%;
             padding: 10px;
+            margin-top: 6px;
             border-radius: 6px;
             border: none;
-            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+            background: linear-gradient(135deg, #ef4444, #991b1b);
             color: #fff;
             font-weight: bold;
             font-size: 14px;
             cursor: pointer;
         }
 
-        /* --- MOBİL UYUM (PORTRAIT / DIKEY) --- */
         @media (max-width: 768px) and (orientation: portrait) {
             #game-header { display: none; }
-            #main-wrapper {
-                flex-direction: column;
-                width: 100vw;
-                height: 100vh;
-                max-height: none;
-                padding: 0;
-                gap: 0;
-            }
-            #game-container {
-                width: 100vw;
-                height: 75vh;
-                border-radius: 0;
-                border: none;
-            }
-            #sidebar {
-                width: 100vw;
-                height: 25vh;
-                flex-direction: row;
-                padding: 4px;
-                background-color: #050508;
-            }
+            #main-wrapper { flex-direction: column; width: 100vw; height: 100vh; max-height: none; padding: 0; gap: 0; }
+            #game-container { width: 100vw; height: 70vh; border-radius: 0; border: none; }
+            #sidebar { width: 100vw; height: 30vh; flex-direction: row; padding: 4px; background-color: #050508; }
             .card { flex: 1; padding: 6px; }
         }
 
-        /* --- MOBİL UYUM (LANDSCAPE / YATAY) --- */
         @media (max-width: 950px) and (orientation: landscape) {
             #game-header { display: none; }
-            #main-wrapper {
-                flex-direction: row;
-                width: 100vw;
-                height: 100vh;
-                max-height: none;
-                padding: 0;
-                gap: 0;
-            }
-            #game-container {
-                flex: 1;
-                height: 100vh;
-                border: none;
-                border-radius: 0;
-            }
-            #sidebar {
-                width: 180px;
-                height: 100vh;
-                padding: 4px;
-                background-color: #050508;
-            }
+            #main-wrapper { flex-direction: row; width: 100vw; height: 100vh; max-height: none; padding: 0; gap: 0; }
+            #game-container { flex: 1; height: 100vh; border: none; border-radius: 0; }
+            #sidebar { width: 200px; height: 100vh; padding: 4px; background-color: #050508; }
         }
     </style>
 </head>
@@ -230,12 +217,15 @@
     </div>
 
     <div id="main-wrapper">
-        <div id="login-modal">
+        <!-- OYUN BİTTİ MODALI -->
+        <div id="gameover-modal" class="modal-overlay" style="display: none;">
             <div class="modal-box">
-                <h2>OYUNCU GİRİŞİ</h2>
-                <p style="font-size: 12px; color: #9ca3af; margin: 0;">Liderlik tablosunda yerini almak için bir isim gir:</p>
-                <input type="text" id="username-input" placeholder="Kullanıcı Adı" maxlength="12">
-                <button onclick="startGameWithUser()">OYUNA BAŞLA</button>
+                <h2>OYUN BİTTİ!</h2>
+                <p id="gameover-reason" style="font-size: 12px; color: #cbd5e1; margin: 4px 0;"></p>
+                <p style="font-size: 14px; font-weight: bold; color: #facc15; margin: 4px 0;">Skor: <span id="gameover-score">0</span></p>
+
+                <input type="text" id="player-name-input" placeholder="İsminizi girin" maxlength="12">
+                <button onclick="saveScoreAndRestart()">KAYDET VE TEKRAR OYNA</button>
             </div>
         </div>
 
@@ -244,37 +234,59 @@
         <div id="sidebar">
             <div class="card">
                 <h3>Durum Paneli</h3>
-                <div class="stat-box"><span>Oyuncu:</span> <span id="ui-player" style="color:#c084fc;">-</span></div>
                 <div class="stat-box"><span>Can:</span> <span id="ui-health" class="hearts">❤️❤️❤️</span></div>
                 <div class="stat-box"><span>Seviye:</span> <span id="ui-level" style="color:#60a5fa;">1</span></div>
                 <div class="stat-box"><span>Kristal:</span> <span id="ui-crystals" style="color:#facc15;">0</span></div>
             </div>
 
-            <div class="card" style="flex:1; overflow-y:auto;">
-                <h3>Liderlik Tablosu</h3>
-                <ol id="leaderboard-list">
-                    <li>Yükleniyor...</li>
-                </ol>
+            <div class="card" style="flex: 1; display: flex; flex-direction: column;">
+                <h3>En Yüksek Skorlar</h3>
+                <ul id="leaderboard" class="leaderboard-list"></ul>
             </div>
         </div>
     </div>
 
     <script>
-        let currentUsername = "Misafir";
         let phaserGame = null;
+        let lastScore = 0;
 
-        function startGameWithUser() {
-            const input = document.getElementById('username-input').value.trim();
-            if (input.length > 0) {
-                currentUsername = input;
+        function updateLeaderboardUI() {
+            let scores = JSON.parse(localStorage.getItem('ard_crypts_scores') || '[]');
+            let listEl = document.getElementById('leaderboard');
+            listEl.innerHTML = '';
+
+            if (scores.length === 0) {
+                listEl.innerHTML = '<li style="color:#64748b; justify-content:center;">Henüz skor yok</li>';
+                return;
             }
-            document.getElementById('ui-player').innerText = currentUsername;
-            document.getElementById('login-modal').style.display = 'none';
 
-            if (!phaserGame) {
-                phaserGame = new Phaser.Game(config);
-            } else {
-                phaserGame.scene.scenes[0].scene.restart();
+            scores.forEach((entry, idx) => {
+                let li = document.createElement('li');
+                li.innerHTML = `<span class="name">${idx + 1}. ${entry.name}</span><span class="score">${entry.score}</span>`;
+                listEl.appendChild(li);
+            });
+        }
+
+        function saveScoreAndRestart() {
+            let nameInput = document.getElementById('player-name-input');
+            let playerName = nameInput.value.trim() || 'Adsız Kahraman';
+
+            let scores = JSON.parse(localStorage.getItem('ard_crypts_scores') || '[]');
+            scores.push({ name: playerName, score: lastScore });
+            scores.sort((a, b) => b.score - a.score);
+            scores = scores.slice(0, 5); // İlk 5 skoru tut
+
+            localStorage.setItem('ard_crypts_scores', JSON.stringify(scores));
+            updateLeaderboardUI();
+
+            nameInput.value = '';
+            document.getElementById('gameover-modal').style.display = 'none';
+
+            if (phaserGame) {
+                let activeScene = phaserGame.scene.getScene('MainScene');
+                if (activeScene) {
+                    activeScene.scene.restart();
+                }
             }
         }
 
@@ -332,7 +344,316 @@
             }
         };
 
-        // --- PHASER AYARLARI ---
+        // --- PHASER SAHNESİ ---
+        class MainScene extends Phaser.Scene {
+            constructor() {
+                super({ key: 'MainScene' });
+            }
+
+            preload() {
+                if (this.textures.exists('bg_dungeon')) return;
+
+                let bgCanvas = this.textures.createCanvas('bg_dungeon', 64, 64);
+                let bgCtx = bgCanvas.context;
+                bgCtx.fillStyle = '#110c1d'; bgCtx.fillRect(0, 0, 64, 64);
+                bgCtx.fillStyle = '#18122b'; bgCtx.fillRect(0, 0, 62, 62);
+                bgCtx.fillStyle = '#211738'; bgCtx.fillRect(2, 2, 28, 28); bgCtx.fillRect(34, 34, 28, 28);
+                bgCanvas.refresh();
+
+                let pCanvas = this.textures.createCanvas('player_pixel', 28, 28);
+                let ctx = pCanvas.context;
+                ctx.fillStyle = '#dc2626'; ctx.fillRect(4, 8, 20, 14);
+                ctx.fillStyle = '#cbd5e1'; ctx.fillRect(7, 7, 14, 14);
+                ctx.fillStyle = '#64748b'; ctx.fillRect(7, 2, 14, 7);
+                ctx.fillStyle = '#38bdf8'; ctx.fillRect(9, 4, 10, 2);
+                ctx.fillStyle = '#eab308'; ctx.fillRect(4, 10, 4, 10);
+                pCanvas.refresh();
+
+                let eCanvas = this.textures.createCanvas('enemy_pixel', 28, 28);
+                let eCtx = eCanvas.context;
+                eCtx.fillStyle = '#991b1b'; eCtx.fillRect(4, 6, 20, 18);
+                eCtx.fillStyle = '#ef4444'; eCtx.fillRect(6, 8, 16, 14);
+                eCtx.fillStyle = '#f59e0b'; eCtx.fillRect(2, 2, 4, 6); eCtx.fillRect(22, 2, 4, 6);
+                eCtx.fillStyle = '#fef08a'; eCtx.fillRect(7, 10, 4, 4); eCtx.fillRect(17, 10, 4, 4);
+                eCtx.fillStyle = '#000000'; eCtx.fillRect(8, 11, 2, 2); eCtx.fillRect(18, 11, 2, 2);
+                eCanvas.refresh();
+
+                let wCanvas = this.textures.createCanvas('wall_pixel', 32, 32);
+                let wCtx = wCanvas.context;
+                wCtx.fillStyle = '#2e1065'; wCtx.fillRect(0, 0, 32, 32);
+                wCtx.fillStyle = '#4c1d95'; wCtx.fillRect(2, 2, 28, 28);
+                wCtx.fillStyle = '#6d28d9'; wCtx.fillRect(4, 4, 24, 4); wCtx.fillRect(4, 18, 24, 4);
+                wCanvas.refresh();
+
+                let cCanvas = this.textures.createCanvas('crystal_pixel', 18, 18);
+                let cCtx = cCanvas.context;
+                cCtx.fillStyle = '#facc15'; cCtx.fillRect(4, 2, 10, 14);
+                cCtx.fillStyle = '#fef08a'; cCtx.fillRect(7, 4, 4, 10);
+                cCanvas.refresh();
+
+                let dCanvas = this.textures.createCanvas('door_pixel', 40, 40);
+                let dCtx = dCanvas.context;
+                dCtx.fillStyle = '#1e3a8a'; dCtx.fillRect(0, 0, 40, 40);
+                dCtx.fillStyle = '#3b82f6'; dCtx.fillRect(5, 5, 30, 30);
+                dCtx.fillStyle = '#93c5fd'; dCtx.fillRect(12, 12, 16, 16);
+                dCanvas.refresh();
+            }
+
+            create() {
+                this.physics.resume();
+
+                this.isGameOver = false;
+                this.isInvulnerable = false;
+                this.score = 0;
+                this.crystalsCollected = 0;
+                this.currentLevel = 1;
+                this.health = 3;
+                this.timeLeft = 25;
+
+                document.getElementById('ui-level').innerText = this.currentLevel;
+                document.getElementById('ui-crystals').innerText = this.crystalsCollected;
+                this.updateHeartsUI();
+
+                this.add.tileSprite(400, 250, 800, 500, 'bg_dungeon');
+
+                this.walls = this.physics.add.staticGroup();
+                this.buildWalls();
+
+                this.door = this.physics.add.sprite(750, 450, 'door_pixel').setVisible(false);
+                this.door.body.enable = false;
+
+                this.player = this.physics.add.sprite(50, 50, 'player_pixel');
+                this.player.setCollideWorldBounds(true);
+                this.physics.add.collider(this.player, this.walls);
+
+                this.crystals = this.physics.add.group();
+                this.spawnCrystals();
+                this.physics.add.overlap(this.player, this.crystals, this.collectCrystal, null, this);
+
+                this.enemies = this.physics.add.group();
+                this.spawnEnemies(this.currentLevel);
+                this.physics.add.collider(this.enemies, this.walls);
+                this.physics.add.collider(this.enemies, this.enemies);
+                this.physics.add.overlap(this.player, this.enemies, this.hitEnemy, null, this);
+
+                this.physics.add.overlap(this.player, this.door, this.passLevel, null, this);
+
+                this.scoreText = this.add.text(20, 15, 'Skor: 0', { fontSize: '20px', fill: '#fff', fontStyle: 'bold' });
+                this.timerText = this.add.text(650, 15, 'Süre: 25s', { fontSize: '20px', fill: '#ef4444', fontStyle: 'bold' });
+
+                this.cursors = this.input.keyboard.createCursorKeys();
+
+                this.joystickActive = false;
+                this.joystickVector = { x: 0, y: 0 };
+                this.JOYSTICK_MAX_RADIUS = 45;
+                this.setupVirtualJoystick();
+
+                if (this.gameTimer) this.gameTimer.remove();
+                this.gameTimer = this.time.addEvent({
+                    delay: 1000,
+                    callback: this.updateTimer,
+                    callbackScope: this,
+                    loop: true
+                });
+            }
+
+            setupVirtualJoystick() {
+                this.input.removeAllListeners();
+                this.resetJoystick();
+
+                this.joystickBase = this.add.circle(0, 0, this.JOYSTICK_MAX_RADIUS, 0x8b5cf6, 0.45).setDepth(100).setVisible(false);
+                this.joystickThumb = this.add.circle(0, 0, 22, 0xffffff, 0.85).setDepth(101).setVisible(false);
+
+                this.input.on('pointerdown', (pointer) => {
+                    if (this.isGameOver) return;
+                    this.joystickActive = true;
+                    this.joystickBase.setPosition(pointer.x, pointer.y).setVisible(true);
+                    this.joystickThumb.setPosition(pointer.x, pointer.y).setVisible(true);
+                    this.updateJoystickVector(pointer);
+                });
+
+                this.input.on('pointermove', (pointer) => {
+                    if (!this.joystickActive || this.isGameOver) return;
+                    this.updateJoystickVector(pointer);
+                });
+
+                this.input.on('pointerup', () => this.resetJoystick());
+                this.input.on('pointerout', () => this.resetJoystick());
+            }
+
+            updateJoystickVector(pointer) {
+                let dx = pointer.x - this.joystickBase.x;
+                let dy = pointer.y - this.joystickBase.y;
+                let dist = Math.hypot(dx, dy);
+
+                if (dist > this.JOYSTICK_MAX_RADIUS) {
+                    let angle = Math.atan2(dy, dx);
+                    this.joystickThumb.x = this.joystickBase.x + Math.cos(angle) * this.JOYSTICK_MAX_RADIUS;
+                    this.joystickThumb.y = this.joystickBase.y + Math.sin(angle) * this.JOYSTICK_MAX_RADIUS;
+                    this.joystickVector.x = Math.cos(angle);
+                    this.joystickVector.y = Math.sin(angle);
+                } else {
+                    this.joystickThumb.x = pointer.x;
+                    this.joystickThumb.y = pointer.y;
+                    this.joystickVector.x = dx / this.JOYSTICK_MAX_RADIUS;
+                    this.joystickVector.y = dy / this.JOYSTICK_MAX_RADIUS;
+                }
+            }
+
+            resetJoystick() {
+                this.joystickActive = false;
+                this.joystickVector = { x: 0, y: 0 };
+                if (this.joystickBase) this.joystickBase.setVisible(false);
+                if (this.joystickThumb) this.joystickThumb.setVisible(false);
+            }
+
+            update() {
+                if (this.isGameOver) return;
+
+                let speed = 200;
+                let vx = 0;
+                let vy = 0;
+
+                if (this.joystickActive) {
+                    vx = this.joystickVector.x * speed;
+                    vy = this.joystickVector.y * speed;
+                }
+
+                if (this.cursors.left.isDown) vx = -speed;
+                else if (this.cursors.right.isDown) vx = speed;
+
+                if (this.cursors.up.isDown) vy = -speed;
+                else if (this.cursors.down.isDown) vy = speed;
+
+                this.player.setVelocity(vx, vy);
+
+                if (vx < 0) this.player.setFlipX(true);
+                else if (vx > 0) this.player.setFlipX(false);
+            }
+
+            buildWalls() {
+                let layout = [
+                    {x: 200, y: 120}, {x: 200, y: 152}, {x: 200, y: 184},
+                    {x: 400, y: 260}, {x: 400, y: 292}, {x: 400, y: 324},
+                    {x: 600, y: 120}, {x: 600, y: 152}, {x: 600, y: 184}
+                ];
+                layout.forEach(w => this.walls.create(w.x, w.y, 'wall_pixel'));
+            }
+
+            spawnCrystals() {
+                let positions = [
+                    {x: 120, y: 240}, {x: 300, y: 90}, {x: 500, y: 420},
+                    {x: 700, y: 140}, {x: 280, y: 420}
+                ];
+                positions.forEach(pos => this.crystals.create(pos.x, pos.y, 'crystal_pixel'));
+            }
+
+            spawnEnemies(count) {
+                this.enemies.clear(true, true);
+                for (let i = 0; i < count + 1; i++) {
+                    let x = Phaser.Math.Between(220, 650);
+                    let y = Phaser.Math.Between(150, 380);
+                    let enemy = this.enemies.create(x, y, 'enemy_pixel');
+
+                    enemy.setCollideWorldBounds(true);
+                    enemy.setBounce(1, 1);
+                    enemy.setFriction(0, 0);
+
+                    let speed = 110 + (count * 15);
+                    let vx = (Math.random() < 0.5 ? 1 : -1) * speed;
+                    let vy = (Math.random() < 0.5 ? 1 : -1) * speed;
+                    enemy.setVelocity(vx, vy);
+                }
+            }
+
+            collectCrystal(player, crystal) {
+                crystal.disableBody(true, true);
+                AudioFX.playCollect();
+
+                this.score += 150;
+                this.crystalsCollected += 1;
+                this.scoreText.setText('Skor: ' + this.score);
+                document.getElementById('ui-crystals').innerText = this.crystalsCollected;
+
+                if (this.crystals.countActive(true) === 0) {
+                    this.door.setVisible(true);
+                    this.door.body.enable = true;
+                    this.timerText.setText("PORTAL AÇILDI!");
+                }
+            }
+
+            hitEnemy(player, enemy) {
+                if (this.isInvulnerable || this.isGameOver) return;
+
+                AudioFX.playHit();
+                this.health -= 1;
+                this.updateHeartsUI();
+
+                if (this.health <= 0) {
+                    this.gameOver("Düşmana Yem Oldun!");
+                } else {
+                    this.isInvulnerable = true;
+                    this.player.setAlpha(0.4);
+                    this.time.addEvent({
+                        delay: 1500,
+                        callback: () => {
+                            this.isInvulnerable = false;
+                            if (this.player && this.player.active) this.player.setAlpha(1);
+                        }
+                    });
+                }
+            }
+
+            passLevel() {
+                AudioFX.playLevelUp();
+                this.currentLevel += 1;
+                this.score += 500;
+                this.timeLeft = 25 + (this.currentLevel * 2);
+
+                document.getElementById('ui-level').innerText = this.currentLevel;
+                this.scoreText.setText('Skor: ' + this.score);
+
+                this.player.setPosition(50, 50);
+                this.door.setVisible(false);
+                this.door.body.enable = false;
+
+                this.spawnCrystals();
+                this.spawnEnemies(this.currentLevel);
+            }
+
+            updateTimer() {
+                if (this.isGameOver) return;
+                this.timeLeft--;
+                this.timerText.setText('Süre: ' + this.timeLeft + 's');
+
+                if (this.timeLeft <= 0) this.gameOver("Zaman Tükendi!");
+            }
+
+            updateHeartsUI() {
+                let heartsStr = "";
+                for (let i = 0; i < this.health; i++) heartsStr += "❤️";
+                document.getElementById('ui-health').innerText = heartsStr || "💀";
+            }
+
+            gameOver(reason) {
+                if (this.isGameOver) return;
+                this.isGameOver = true;
+                this.resetJoystick();
+
+                if (this.gameTimer) this.gameTimer.remove();
+
+                this.physics.pause();
+                this.player.setVelocity(0, 0);
+
+                AudioFX.playGameOver();
+
+                lastScore = this.score;
+                document.getElementById('gameover-reason').innerText = reason;
+                document.getElementById('gameover-score').innerText = this.score;
+                document.getElementById('gameover-modal').style.display = 'flex';
+            }
+        }
+
         const config = {
             type: Phaser.AUTO,
             width: 800,
@@ -346,318 +667,13 @@
                 default: 'arcade',
                 arcade: { debug: false }
             },
-            scene: { preload: preload, create: create, update: update }
+            scene: MainScene
         };
 
-        let player, crystals, enemies, walls, door;
-        let cursors;
-        let scoreText, timerText;
-        let score = 0, crystalsCollected = 0, currentLevel = 1, health = 3, timeLeft = 25;
-        let gameTimer, isGameOver = false, isInvulnerable = false;
-
-        let joystickBase, joystickThumb;
-        let joystickActive = false;
-        let joystickVector = { x: 0, y: 0 };
-        const JOYSTICK_MAX_RADIUS = 45;
-
-        function preload() {
-            let bgCanvas = this.textures.createCanvas('bg_dungeon', 64, 64);
-            let bgCtx = bgCanvas.context;
-            bgCtx.fillStyle = '#110c1d'; bgCtx.fillRect(0, 0, 64, 64);
-            bgCtx.fillStyle = '#18122b'; bgCtx.fillRect(0, 0, 62, 62);
-            bgCtx.fillStyle = '#211738'; bgCtx.fillRect(2, 2, 28, 28); bgCtx.fillRect(34, 34, 28, 28);
-            bgCanvas.refresh();
-
-            let pCanvas = this.textures.createCanvas('player_pixel', 28, 28);
-            let ctx = pCanvas.context;
-            ctx.fillStyle = '#dc2626'; ctx.fillRect(4, 8, 20, 14);
-            ctx.fillStyle = '#cbd5e1'; ctx.fillRect(7, 7, 14, 14);
-            ctx.fillStyle = '#64748b'; ctx.fillRect(7, 2, 14, 7);
-            ctx.fillStyle = '#38bdf8'; ctx.fillRect(9, 4, 10, 2);
-            ctx.fillStyle = '#eab308'; ctx.fillRect(4, 10, 4, 10);
-            pCanvas.refresh();
-
-            let eCanvas = this.textures.createCanvas('enemy_pixel', 28, 28);
-            let eCtx = eCanvas.context;
-            eCtx.fillStyle = '#991b1b'; eCtx.fillRect(4, 6, 20, 18);
-            eCtx.fillStyle = '#ef4444'; eCtx.fillRect(6, 8, 16, 14);
-            eCtx.fillStyle = '#f59e0b'; eCtx.fillRect(2, 2, 4, 6); eCtx.fillRect(22, 2, 4, 6);
-            eCtx.fillStyle = '#fef08a'; eCtx.fillRect(7, 10, 4, 4); eCtx.fillRect(17, 10, 4, 4);
-            eCtx.fillStyle = '#000000'; eCtx.fillRect(8, 11, 2, 2); eCtx.fillRect(18, 11, 2, 2);
-            eCanvas.refresh();
-
-            let wCanvas = this.textures.createCanvas('wall_pixel', 32, 32);
-            let wCtx = wCanvas.context;
-            wCtx.fillStyle = '#2e1065'; wCtx.fillRect(0, 0, 32, 32);
-            wCtx.fillStyle = '#4c1d95'; wCtx.fillRect(2, 2, 28, 28);
-            wCtx.fillStyle = '#6d28d9'; wCtx.fillRect(4, 4, 24, 4); wCtx.fillRect(4, 18, 24, 4);
-            wCanvas.refresh();
-
-            let cCanvas = this.textures.createCanvas('crystal_pixel', 18, 18);
-            let cCtx = cCanvas.context;
-            cCtx.fillStyle = '#facc15'; cCtx.fillRect(4, 2, 10, 14);
-            cCtx.fillStyle = '#fef08a'; cCtx.fillRect(7, 4, 4, 10);
-            cCanvas.refresh();
-
-            let dCanvas = this.textures.createCanvas('door_pixel', 40, 40);
-            let dCtx = dCanvas.context;
-            dCtx.fillStyle = '#1e3a8a'; dCtx.fillRect(0, 0, 40, 40);
-            dCtx.fillStyle = '#3b82f6'; dCtx.fillRect(5, 5, 30, 30);
-            dCtx.fillStyle = '#93c5fd'; dCtx.fillRect(12, 12, 16, 16);
-            dCanvas.refresh();
-        }
-
-        function create() {
-            isGameOver = false;
-            this.add.tileSprite(400, 250, 800, 500, 'bg_dungeon');
-
-            walls = this.physics.add.staticGroup();
-            buildWalls();
-
-            door = this.physics.add.sprite(750, 450, 'door_pixel').setVisible(false);
-            door.body.enable = false;
-
-            player = this.physics.add.sprite(50, 50, 'player_pixel');
-            player.setCollideWorldBounds(true);
-            this.physics.add.collider(player, walls);
-
-            crystals = this.physics.add.group();
-            spawnCrystals(this);
-            this.physics.add.overlap(player, crystals, collectCrystal, null, this);
-
-            enemies = this.physics.add.group();
-            spawnEnemies(this, currentLevel);
-            this.physics.add.collider(enemies, walls);
-            this.physics.add.collider(enemies, enemies);
-            this.physics.add.overlap(player, enemies, hitEnemy, null, this);
-
-            this.physics.add.overlap(player, door, passLevel, null, this);
-
-            scoreText = this.add.text(20, 15, 'Skor: 0', { fontSize: '20px', fill: '#fff', fontStyle: 'bold' });
-            timerText = this.add.text(650, 15, 'Süre: 25s', { fontSize: '20px', fill: '#ef4444', fontStyle: 'bold' });
-
-            cursors = this.input.keyboard.createCursorKeys();
-
-            setupVirtualJoystick(this);
-
-            gameTimer = this.time.addEvent({
-                delay: 1000,
-                callback: updateTimer,
-                callbackScope: this,
-                loop: true
-            });
-        }
-
-        function setupVirtualJoystick(scene) {
-            joystickBase = scene.add.circle(0, 0, JOYSTICK_MAX_RADIUS, 0x8b5cf6, 0.45)
-                .setDepth(100)
-                .setVisible(false);
-
-            joystickThumb = scene.add.circle(0, 0, 22, 0xffffff, 0.85)
-                .setDepth(101)
-                .setVisible(false);
-
-            scene.input.on('pointerdown', (pointer) => {
-                if (isGameOver) return;
-                joystickActive = true;
-                joystickBase.setPosition(pointer.x, pointer.y).setVisible(true);
-                joystickThumb.setPosition(pointer.x, pointer.y).setVisible(true);
-                updateJoystickVector(pointer);
-            });
-
-            scene.input.on('pointermove', (pointer) => {
-                if (!joystickActive || isGameOver) return;
-                updateJoystickVector(pointer);
-            });
-
-            scene.input.on('pointerup', () => resetJoystick());
-            scene.input.on('pointerout', () => resetJoystick());
-        }
-
-        function updateJoystickVector(pointer) {
-            let dx = pointer.x - joystickBase.x;
-            let dy = pointer.y - joystickBase.y;
-            let dist = Math.hypot(dx, dy);
-
-            if (dist > JOYSTICK_MAX_RADIUS) {
-                let angle = Math.atan2(dy, dx);
-                joystickThumb.x = joystickBase.x + Math.cos(angle) * JOYSTICK_MAX_RADIUS;
-                joystickThumb.y = joystickBase.y + Math.sin(angle) * JOYSTICK_MAX_RADIUS;
-                joystickVector.x = Math.cos(angle);
-                joystickVector.y = Math.sin(angle);
-            } else {
-                joystickThumb.x = pointer.x;
-                joystickThumb.y = pointer.y;
-                joystickVector.x = dx / JOYSTICK_MAX_RADIUS;
-                joystickVector.y = dy / JOYSTICK_MAX_RADIUS;
-            }
-        }
-
-        function resetJoystick() {
-            joystickActive = false;
-            joystickVector = { x: 0, y: 0 };
-            if (joystickBase) joystickBase.setVisible(false);
-            if (joystickThumb) joystickThumb.setVisible(false);
-        }
-
-        function update() {
-            if (isGameOver) return;
-
-            let speed = 200;
-            let vx = 0;
-            let vy = 0;
-
-            if (joystickActive) {
-                vx = joystickVector.x * speed;
-                vy = joystickVector.y * speed;
-            }
-
-            if (cursors.left.isDown) vx = -speed;
-            else if (cursors.right.isDown) vx = speed;
-
-            if (cursors.up.isDown) vy = -speed;
-            else if (cursors.down.isDown) vy = speed;
-
-            player.setVelocity(vx, vy);
-
-            if (vx < 0) player.setFlipX(true);
-            else if (vx > 0) player.setFlipX(false);
-        }
-
-        function buildWalls() {
-            let layout = [
-                {x: 200, y: 120}, {x: 200, y: 152}, {x: 200, y: 184},
-                {x: 400, y: 260}, {x: 400, y: 292}, {x: 400, y: 324},
-                {x: 600, y: 120}, {x: 600, y: 152}, {x: 600, y: 184}
-            ];
-            layout.forEach(w => walls.create(w.x, w.y, 'wall_pixel'));
-        }
-
-        function spawnCrystals(scene) {
-            let positions = [
-                {x: 120, y: 240}, {x: 300, y: 90}, {x: 500, y: 420},
-                {x: 700, y: 140}, {x: 280, y: 420}
-            ];
-            positions.forEach(pos => crystals.create(pos.x, pos.y, 'crystal_pixel'));
-        }
-
-        function spawnEnemies(scene, count) {
-            enemies.clear(true, true);
-            for (let i = 0; i < count + 1; i++) {
-                let x = Phaser.Math.Between(220, 650);
-                let y = Phaser.Math.Between(150, 380);
-                let enemy = enemies.create(x, y, 'enemy_pixel');
-
-                // Düşman takılmalarını önleyen tam fizik sekme ayarları
-                enemy.setCollideWorldBounds(true);
-                enemy.setBounce(1, 1);
-                enemy.setFriction(0, 0);
-
-                let speed = 110 + (count * 15);
-                let vx = (Math.random() < 0.5 ? 1 : -1) * speed;
-                let vy = (Math.random() < 0.5 ? 1 : -1) * speed;
-                enemy.setVelocity(vx, vy);
-            }
-        }
-
-        function collectCrystal(player, crystal) {
-            crystal.disableBody(true, true);
-            AudioFX.playCollect();
-
-            score += 150;
-            crystalsCollected += 1;
-            scoreText.setText('Skor: ' + score);
-            document.getElementById('ui-crystals').innerText = crystalsCollected;
-
-            if (crystals.countActive(true) === 0) {
-                door.setVisible(true);
-                door.body.enable = true;
-                timerText.setText("PORTAL AÇILDI!");
-            }
-        }
-
-        function hitEnemy(player, enemy) {
-            if (isInvulnerable) return;
-
-            AudioFX.playHit();
-            health -= 1;
-            updateHeartsUI();
-
-            if (health <= 0) {
-                gameOver("Düşmana Yem Oldun!");
-            } else {
-                isInvulnerable = true;
-                player.setAlpha(0.4);
-                this.time.addEvent({
-                    delay: 1500,
-                    callback: () => {
-                        isInvulnerable = false;
-                        player.setAlpha(1);
-                    }
-                });
-            }
-        }
-
-        function passLevel() {
-            AudioFX.playLevelUp();
-            currentLevel += 1;
-            score += 500;
-            timeLeft = 25 + (currentLevel * 2);
-
-            document.getElementById('ui-level').innerText = currentLevel;
-            scoreText.setText('Skor: ' + score);
-
-            player.setPosition(50, 50);
-            door.setVisible(false);
-            door.body.enable = false;
-
-            spawnCrystals(this);
-            spawnEnemies(this, currentLevel);
-        }
-
-        function updateTimer() {
-            if (isGameOver) return;
-            timeLeft--;
-            timerText.setText('Süre: ' + timeLeft + 's');
-
-            if (timeLeft <= 0) gameOver("Zaman Tükendi!");
-        }
-
-        function updateHeartsUI() {
-            let heartsStr = "";
-            for (let i = 0; i < health; i++) heartsStr += "❤️";
-            document.getElementById('ui-health').innerText = heartsStr || "💀";
-        }
-
-        function gameOver(reason) {
-            isGameOver = true;
-            resetJoystick();
-            if (gameTimer) gameTimer.remove();
-            if (phaserGame && phaserGame.scene.scenes[0]) {
-                phaserGame.scene.scenes[0].physics.pause();
-            }
-            AudioFX.playGameOver();
-
-            setTimeout(() => {
-                alert("OYUN BİTTİ!\nOyuncu: " + currentUsername + "\nNeden: " + reason + "\nSkorunuz: " + score);
-                saveScoreToDjango(currentUsername, score, crystalsCollected);
-            }, 100);
-        }
-
-        function saveScoreToDjango(username, finalScore, finalCrystals) {
-            fetch('/api/save-score/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: username, score: finalScore, crystals: finalCrystals })
-            })
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('login-modal').style.display = 'flex';
-            })
-            .catch(err => {
-                document.getElementById('login-modal').style.display = 'flex';
-            });
-        }
+        window.onload = () => {
+            phaserGame = new Phaser.Game(config);
+            updateLeaderboardUI();
+        };
     </script>
 </body>
 </html>

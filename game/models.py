@@ -21,3 +21,17 @@ class GameSession(models.Model):
     def __str__(self):
         player_name = self.user.username if self.user else "Misafir"
         return f"{player_name} - Skor: {self.score}"
+
+
+class Score(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    username = models.CharField(max_length=50, default="Misafir")
+    score = models.IntegerField(default=0)
+    crystals = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-score', '-created_at']
+
+    def __str__(self):
+        return f"{self.username} - {self.score} P"
